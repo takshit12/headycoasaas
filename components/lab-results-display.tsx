@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient as createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { auth } from '@clerk/nextjs/server';
 import { FileText } from 'lucide-react';
 import { LabResultsList } from './lab-results-list';
@@ -26,8 +27,34 @@ export async function LabResultsDisplay() {
     return <p className="text-red-500 text-center">User not authenticated.</p>;
   }
 
-  const supabase = createClient();
-  console.log('[LabResultsDisplay] Fetching initial results...');
+  // --- Explicitly get Supabase token using the template ---
+  // *** IMPORTANT: Replace 'supabase' if your Clerk template has a different name ***
+  const supabaseToken = await authResult.getToken({ template: 'supabase' });
+  if (!supabaseToken) {
+      console.error('[LabResultsDisplay] Could not retrieve Supabase token from Clerk using the template.');
+      return <p className="text-red-500 text-center">Authentication token issue.</p>;
+  }
+  console.log('[LabResultsDisplay] Retrieved Supabase token from Clerk template.');
+  // --- End token fetch ---
+
+  // --- Create Supabase client WITH the specific token ---
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('[LabResultsDisplay] Missing Supabase URL or Anon Key environment variables.');
+      return <p className="text-red-500 text-center">Server configuration error.</p>;
+  }
+
+  const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: { Authorization: `Bearer ${supabaseToken}` },
+    },
+  });
+  console.log('[LabResultsDisplay] Created Supabase client instance with explicit token.');
+  // --- End client creation ---
+
+  console.log('[LabResultsDisplay] Fetching initial results with explicit token client...');
   const { data: initialResults, error } = await supabase
     .from('lab_results')
     .select('id, created_at, file_name, status, description, error_details, user_id') 
