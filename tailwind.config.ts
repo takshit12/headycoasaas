@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+const { fontFamily } = require("tailwindcss/defaultTheme");
 
 const config: Config = {
 	darkMode: ["class"],
@@ -8,8 +9,24 @@ const config: Config = {
 		"./app/**/*.{js,ts,jsx,tsx,mdx}",
 	],
 	theme: {
+		container: {
+			center: true,
+			padding: "1.5rem",
+			screens: {
+				"2xl": "1400px",
+			},
+		},
 		extend: {
+			fontFamily: {
+				sans: ["var(--font-geist-sans)", ...fontFamily.sans],
+				mono: ["var(--font-geist-mono)", ...fontFamily.mono],
+				serif: ["var(--font-playfair)", ...fontFamily.serif],
+			},
 			colors: {
+				'brand-dark-green': '#14211B',
+				'brand-light-bg': '#F5F5ED',
+				'brand-accent-green': '#2E8555',
+				'brand-card-dark': '#1A2A23',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				card: {
